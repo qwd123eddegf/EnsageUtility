@@ -112,7 +112,6 @@ namespace KarlAschnikov
             _me = ObjectManager.LocalPlayer;
 
             Game.OnFireEvent += Game_OnFireEvent;
-            ;
         }
 
         private static void Game_OnFireEvent(FireEventEventArgs args)
