@@ -121,10 +121,10 @@ namespace KarlAschnikov
                 var killer = (uint) args.GameEvent.GetInt("killer1_userid");
                 var rekted = (uint) args.GameEvent.GetInt("victim_userid");
 
-                if (ObjectManager.GetPlayerByID(killer).Name == _me.Name)
+                if (ObjectManager.GetPlayerById(killer).Name == _me.Name)
                 {
                     var disrespect = string.Format(Disrespect[new Random().Next(0, Disrespect.Length)],
-                        ObjectManager.GetPlayerByID(rekted).Name);
+                        ObjectManager.GetPlayerById(rekted).Name);
 
                     Game.ExecuteCommand($"say {disrespect}");
                 }
