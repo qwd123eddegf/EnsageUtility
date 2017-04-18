@@ -22,36 +22,69 @@ namespace uStash
         {
             _me = ObjectManager.LocalHero;
 
-            _menu = new Menu("Stash Picker", "StashPicker", true);
-            _menu.AddItem(new MenuItem("hotkeyPick", "Hotkey to pick").SetValue(new KeyBind('I', KeyBindType.Press)));
-            _menu.AddItem(new MenuItem("alwaysPick", "Always pick").SetValue(false));
-
-            _menu.AddToMainMenu();
-
-            GameDispatcher.OnIngameUpdate += GameDispatcher_OnIngameUpdate;
+            if (_menu == null)
+            {
+                _menu = new Menu("Stash Picker", "StashPicker", true);
+                _menu.AddItem(new MenuItem("hotkeyPick", "Hotkey to pick").SetValue(new KeyBind('I', KeyBindType.Press)));
+                _menu.AddItem(new MenuItem("alwaysPick", "Always pick").SetValue(false));
+                _menu.AddToMainMenu();
+            }
+            Game.OnIngameUpdate += Game_OnIngameUpdate;
         }
 
         private static void Events_OnClose(object sender, EventArgs e)
         {
-            GameDispatcher.OnIngameUpdate -= GameDispatcher_OnIngameUpdate;
+            Game.OnIngameUpdate -= Game_OnIngameUpdate;
         }
 
         private static void PickfromStash()
         {
-            var stash = _me.Inventory.Stash;
+            var stash = _me.Inventory.Stash.ToList();
 
             if (!stash.Any())
                 return;
 
-            foreach (var item in stash)
+            // move recipes to free backpack slots
+            var backpackSlots = _me.Inventory.FreeBackpackSlots.ToList();
+            if (backpackSlots.Any())
             {
-                item.MoveItem(_me.Inventory.FreeSlots.FirstOrDefault());
+                var recipes = stash.Where(x => x.IsRecipe).ToList();
+                foreach (var item in recipes)
+                {
+                    if (!backpackSlots.Any())
+                    {
+                        break;
+                    }
+                    var slot = backpackSlots.First();
+
+                    backpackSlots.RemoveAt(0);
+                    stash.Remove(item);
+
+                    item.MoveItem(slot);
+                }
+            }
+
+            // move rest of items to free slots
+            var freeSlots = _me.Inventory.FreeInventorySlots.ToList();
+            if (freeSlots.Any())
+            {
+                foreach (var item in stash)
+                {
+                    if (!freeSlots.Any())
+                    {
+                        break;
+                    }
+                    var slot = freeSlots.First();
+
+                    freeSlots.RemoveAt(0);
+
+                    item.MoveItem(slot);
+                }
             }
         }
 
-        private static void GameDispatcher_OnIngameUpdate(EventArgs args)
+        private static void Game_OnIngameUpdate(EventArgs args)
         {
-
             if (Game.IsPaused || !_me.IsAlive)
             {
                 return;
